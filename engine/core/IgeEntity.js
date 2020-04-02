@@ -957,9 +957,17 @@ var IgeEntity = IgeObject.extend({
 	 * @return {*} "this" when arguments are passed to allow method
 	 * chaining or the current value if no arguments are specified.
 	 */
-	highlight: function (val) {
+	highlight: function (val, highlightChildEntities = true) {
 		if (val !== undefined) {
 			this._highlight = val;
+
+			if (highlightChildEntities) {
+				this._children.each(function (child) {
+					child.highlight(val);
+				});
+			}
+
+			this.cacheDirty(true);
 			return this;
 		}
 
@@ -1858,8 +1866,10 @@ var IgeEntity = IgeObject.extend({
 				texture.render(ctx, this, ige._tickDelta);
 
 				if (this._highlight) {
+					ctx.save();
 					ctx.globalCompositeOperation = this._highlightToGlobalCompositeOperation(this._highlight);
 					texture.render(ctx, this);
+					ctx.restore();
 				}
 			}
 
@@ -1911,16 +1921,6 @@ var IgeEntity = IgeObject.extend({
 		}
 
 		ige._drawCount++;
-
-		if (this._highlight) {
-			ctx.globalCompositeOperation = this._highlightToGlobalCompositeOperation(this._highlight);
-			ctx.drawImage(
-				this._cacheCanvas,
-				-this._bounds2d.x2, -this._bounds2d.y2
-			);
-
-			ige._drawCount++;
-		}
 		ctx.restore();
 	},
 
